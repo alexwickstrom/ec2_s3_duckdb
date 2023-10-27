@@ -1,25 +1,36 @@
-# Makefile for managing the project
+# Install dependencies
+deps:
+	brew install minikube && \
+	brew install lazydocker
 
 # Build all containers
-build-all:
+build:
 	docker-compose build
 
 # Start all containers in detached mode
-up-all:
+up:
 	docker-compose up -d
+
+duckdb-bash:
+	docker-compose exec duckdb bash
+
+pyscript-bash:
+	docker-compose exec pyscript bash
 
 # Build and start Lightdash
 init-lightdash:
 	brew install minikube && \
-	minikube start --memory=4096 && \
+	minikube start  && \
 	helm repo add lightdash https://lightdash.github.io/helm-charts && \
 	kubectl create namespace lightdash && \
-	helm install lightdash lightdash/lightdash -n lightdash -f k8s/lightdash/values.yaml && \
+	helm install lightdash lightdash/lightdash -n lightdash -f k8s/lightdash/values.yaml
 	
-
 # Stop all containers
 down-all:
 	docker-compose down
+
+destroy-docker:
+	docker-compose down -v
 
 # Stop Minikube
 stop-minikube:
@@ -43,6 +54,8 @@ show-lightdash:
 	kubectl get pods -n lightdash
 
 
+duckdb-query:
+    docker-compose exec duckdb python3 -m olap
 
 
 .PHONY: build-all up-all init-lightdash down-all stop-minikube delete-minikube

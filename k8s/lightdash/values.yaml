@@ -3,7 +3,7 @@ secrets:
   LIGHTDASH_SECRET: notverysecret123
 
 configMap:
-  SITE_URL: https://localhost:1111
+  SITE_URL: http://localhost
 
 service:
   type: NodePort

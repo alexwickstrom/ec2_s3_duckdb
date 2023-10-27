@@ -25,9 +25,9 @@ Directory Structure:
 ├── k8s  # for kubernetes stuff  
 │   └── lightdash
 │       └── values.yaml
-|── terraform  # TODO
-|   └── main.tf
-|── .env  # envvars
+│── terraform  # TODO
+│   └── main.tf
+│── .env  # envvars
 ```
 
 ```mermaid
@@ -48,25 +48,3 @@ graph TD;
 
 ```
 
-Lightdash
-```bash
-# install dependencies
-brew install minikube
-minikube start --memory=2048 --cpus=2 --driver=docker
-helm repo add lightdash https://lightdash.github.io/helm-charts
-kubectl create namespace lightdash
-cd ./k8s/lightdash
-helm install lightdash lightdash/lightdash -n lightdash -f values.yaml
-```
-
-To tear down:
-```bash
-helm uninstall lightdash -n lightdash
-minikube delete --all --purge
-```
-
-To start over:
-```bash
-minikube start --memory=4096 --cpus=2 --driver=docker
-helm install lightdash lightdash/lightdash -n lightdash -f values.yaml
-```

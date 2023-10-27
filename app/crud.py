@@ -32,7 +32,7 @@ def count_rows_in_tables(cursor):
         print(f"The number of rows in the {table} table is {count}")
 
 
-def populate_tables(connection):
+def populate_tables(connection, num_doctors=100, num_patients=10, num_appointments=20):
     def fetch_all_ids(cursor, table_name):
         cursor.execute(f"SELECT id FROM {table_name}")
         return [row[0] for row in cursor.fetchall()]
@@ -43,8 +43,8 @@ def populate_tables(connection):
         return [(row[0], row[1]) for row in cursor.fetchall()]
 
     with connection.cursor() as cursor:
-        doctors = DoctorFactory.populate(cursor, n=100)
-        patients = Patient.populate(cursor, doctors, n=10)
+        doctors = DoctorFactory.populate(cursor, n=num_doctors)
+        patients = Patient.populate(cursor, doctors, n=num_patients)
         # Fetch IDs of inserted Doctors and Patients
 
         doctor_ids = fetch_all_ids(cursor, "Doctor")
@@ -53,7 +53,7 @@ def populate_tables(connection):
         # # Create Python objects for doctors and patients with the fetched IDs
         doctors = [Doctor(id=i) for i in doctor_ids]
         patients = [Patient(id=i, doctor_id=d) for i, d in patient_data]
-        appointments = Appointment.populate(cursor, patients, n=10)
+        appointments = Appointment.populate(cursor, patients, n=num_appointments)
         # # Populate Appointment table
         # appointments AppointmentFactory.populate(cursor, doctors, patients, n=10)
 
