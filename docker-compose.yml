@@ -1,0 +1,55 @@
+version: '3'
+services:
+
+  pyscript:
+    build: ./app/
+    volumes:
+      - shared-data:/shared-data
+      - parquet-data:/parquet-data
+    env_file:
+      - ./.env
+    depends_on:
+      - minio
+
+  minio:
+    image: minio/minio
+    volumes:
+      - minio-data:/data
+      - shared-data:/shared-data
+    environment:
+      MINIO_ACCESS_KEY: minio
+      MINIO_SECRET_KEY: minio123
+     
+    command: server /data
+    ports:
+      - "9000:9000"
+      
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+    ports:
+      - "3307:3307"
+
+  duckdb:
+    build: 
+      context: .
+      dockerfile: ./duck/Dockerfile
+    volumes:
+      - ./app/:/app/
+    command: tail -f /dev/null  # Keeps the container running
+    
+    environment:
+      - DUCKDB_AUTO_CONF=false  # Optional: Disable auto-configuration
+    env_file:
+      - ./.env
+    ports:
+      - "5555:5555"
+    depends_on:
+      - minio
+
+volumes:
+  minio-data:
+  shared-data:
+  parquet-data:

@@ -1,0 +1,22 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pandas = "*"
+polars = "*"
+pyarrow = "*"
+boto3 = "*"
+duckdb = "*"
+pymysql = "*"
+factory-boy = "*"
+faker = "*"
+black = "*"
+isort = "*"
+urllib3 = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.11"
