@@ -20,13 +20,13 @@ class DoctorFactory(Factory):
 
     @classmethod
     def populate(cls, cursor, n=1):
+        print("Populating the Doctor table")
         doctors = [cls(id=i, name=rfaker.name()) for i in range(1, n + 1)]
         values = [(doc.id, doc.name) for doc in doctors]
         try:
-            cursor.executemany("INSERT INTO Doctor (id, name) VALUES (%s, %s)", values)
+            cursor.executemany("INSERT INTO doctor (id, name) VALUES (%s, %s)", values)
         except Exception as e:
-
-            cursor.execute("SELECT * FROM Doctor")
+            cursor.execute("SELECT * FROM doctor")
             import pdb
 
             pdb.set_trace()
@@ -36,8 +36,8 @@ class DoctorFactory(Factory):
     def create_table(cls, cursor):
         cursor.execute(
             """
-            CREATE TABLE IF NOT EXISTS Doctor (
-                id INT PRIMARY KEY,
+            CREATE TABLE IF NOT EXISTS doctor (
+                id SERIAL PRIMARY KEY,
                 name VARCHAR(255)
             );
         """
@@ -54,24 +54,26 @@ class PatientFactory:
 
     @classmethod
     def populate(cls, cursor, doctors, n=1):
+        print("Populating the Patient table")
         patients = [cls(doctor_id=doctor.id) for doctor in doctors for _ in range(n)]
         values = [
             (patient.name, patient.age, patient.doctor_id) for patient in patients
         ]
         cursor.executemany(
-            "INSERT INTO Patient (name, age, doctor_id) VALUES (%s, %s, %s)", values,
+            "INSERT INTO patient (name, age, doctor_id) VALUES (%s, %s, %s)",
+            values,
         )
         return patients
 
     @classmethod
     def create_table(cls, cursor):
         cursor.execute(
-            """CREATE TABLE IF NOT EXISTS Patient (
-                id INT PRIMARY KEY AUTO_INCREMENT,
+            """CREATE TABLE IF NOT EXISTS patient (
+                id SERIAL PRIMARY KEY,
                 name VARCHAR(255),
                 age INT,
                 doctor_id INT,
-                FOREIGN KEY (doctor_id) REFERENCES Doctor(id)
+                FOREIGN KEY (doctor_id) REFERENCES doctor(id)
             );"""
         )
 
@@ -86,9 +88,6 @@ class AppointmentFactory(Factory):
 
     class Meta:
         model = Appointment
-
-
-# Example usage
 
 
 class LineItemFactory(Factory):

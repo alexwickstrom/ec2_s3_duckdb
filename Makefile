@@ -9,7 +9,10 @@ build:
 
 # Start all containers in detached mode
 up:
-	docker-compose up -d
+	docker-compose up -d --remove-orphans
+
+rebuild:
+	make build && make up
 
 duckdb-bash:
 	docker-compose exec duckdb bash
@@ -53,9 +56,11 @@ show-lightdash:
 	echo " " && \
 	kubectl get pods -n lightdash
 
+postgres-shell:
+	docker-compose exec postgres psql -U postgres -d mydatabase
 
 duckdb-query:
-    docker-compose exec duckdb python3 -m olap
+	docker-compose exec duckdb python3 -m olap
 
 
 .PHONY: build-all up-all init-lightdash down-all stop-minikube delete-minikube

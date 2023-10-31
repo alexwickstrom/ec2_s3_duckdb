@@ -24,15 +24,41 @@ resource "aws_security_group" "allow_alb" {
   }
 }
 
+resource "aws_db_instance" "my_db" {
+  allocated_storage    = 20
+  storage_type         = "gp2"
+  engine               = "postgres"
+  engine_version       = "15"
+  instance_class       = "db.t2.micro"
+  name                 = "mydb"
+  username             = var.db_username
+  password             = var.db_password
+  parameter_group_name = "default.postgres13"
+  skip_final_snapshot   = true
+}
+
 resource "aws_instance" "my_instance" {
   ami           = "ami-0c55b159cbfafe1f0" # Update this to a relevant AMI ID
-  instance_type = "t2.micro"
+  instance_type = var.instance_type
 
   subnet_id = aws_subnet.main.id
 
   security_groups = [
     aws_security_group.allow_alb.name
   ]
+
+  provisioner "file" {
+    source      = "./app/"
+    destination = "/home/ubuntu/app"
+  }
+  
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /home/ubuntu/app/entrypoint.sh",
+      "/home/ubuntu/app/entrypoint.sh"
+    ]
+  }
+
 
   user_data = <<-EOF
               #!/bin/bash
