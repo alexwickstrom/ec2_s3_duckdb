@@ -31,20 +31,22 @@ Directory Structure:
 ```
 
 ```mermaid
-graph TD;
-  Doctor -->|FK| Appointment
-  Doctor -->|FK| CashPayment
-  Doctor -->|FK| LineItemTransaction
+erDiagram
+    Doctor ||--o{ Office : ""
+    Doctor ||--o{ CashPayment : ""
+    Doctor ||--o{ LineItemTransaction : ""
 
-  Patient -->|FK| Appointment
-  Patient -->|FK| CashPayment
-  Patient -->|FK| LineItemTransaction
+    Office ||--o{ Appointment : ""
+    
+    Patient ||--o{ Appointment : ""
+    Patient ||--o{ CashPayment : ""
+    Patient ||--o{ LineItemTransaction : ""
+    
+    Appointment ||--o{ LineItem : ""
+    
+    LineItem ||--o{ CashPayment : ""
+    LineItem ||--o{ LineItemTransaction : ""
 
-  Appointment -->|FK| LineItem
-  Appointment -->|FK| LineItemTransaction
-
-  LineItem -->|FK| CashPayment
-  LineItem -->|FK| LineItemTransaction
 
 ```
 
