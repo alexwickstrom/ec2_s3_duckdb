@@ -1,5 +1,4 @@
 from factory import Factory, Faker, SubFactory
-
 from faker import Faker as RealFaker
 
 rfaker = RealFaker()

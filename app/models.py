@@ -1,12 +1,14 @@
-from faker import Faker
-from random import choice, randint
 from datetime import datetime
+from random import choice, randint
+
+from faker import Faker
 
 fake = Faker()
 
 tables = [
     "doctor",
     "patient",
+    "office",
     "appointment",
     "cashpayment",
     "lineitem",
@@ -22,13 +24,14 @@ class Doctor:
 
 class Patient:
     def __init__(self, name=None, age=None, doctor_id=None, id=None):
-        self.id = id or None  # Keep as None if not provided
+        self.id = id or None
         self.name = name or fake.name()
         self.age = age or fake.random_int(min=18, max=99)
         self.doctor_id = doctor_id or None
 
     @classmethod
     def populate(cls, cursor, doctors, n=1):
+        print(f"Populating the {cls.__name__} table...")
         patients = [cls(doctor_id=doctor.id) for doctor in doctors for _ in range(n)]
         last_ids = []
         for patient in patients:
@@ -45,34 +48,73 @@ class Patient:
         return patients
 
 
+class Office:
+    def __init__(self, name=None, doctor_id=None, id=None):
+        self.id = id or None
+        self.name = name or fake.company()
+        self.doctor_id = doctor_id
+
+    @classmethod
+    def create_table(cls, cursor):
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS office (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255),
+                doctor_id INT,
+                FOREIGN KEY (doctor_id) REFERENCES doctor(id)
+            );
+        """
+        )
+
+    @classmethod
+    def populate(cls, cursor, doctors, n=1):
+        print(f"Populating the {cls.__name__} table...")
+        offices = [cls(doctor_id=doctor.id) for doctor in doctors for _ in range(n)]
+        last_ids = []
+        for office in offices:
+            cursor.execute(
+                """
+                INSERT INTO office (name, doctor_id)
+                VALUES (%s, %s) RETURNING id
+                """,
+                (office.name, office.doctor_id),
+            )
+            last_id = cursor.fetchone()[0]
+            last_ids.append(last_id)
+            office.id = last_id
+        return offices
+
+
 class Appointment:
-    def __init__(self, patient_id, doctor_id, date=None):
+    def __init__(self, patient_id, doctor_id, office_id, date=None):
         self.patient_id = patient_id
         self.doctor_id = doctor_id
+        self.office_id = office_id
         self.date = date if date else Faker().date_this_decade()
 
     @classmethod
-    def populate(cls, cursor, patients, n=1):
-        print("Populating the Appointment table . . .")
+    def populate(cls, cursor, patients, offices, n=1):
+        print(f"Populating the {cls.__name__} table...")
         faker = Faker()
         total_appointments = len(patients) * n
         bulk_dates = [faker.date_this_decade() for _ in range(total_appointments)]
-        date_index = 0
+        appointments = []
         for patient in patients:
-            appointments = []
             for _ in range(n):
+                office = choice(offices)
                 appointment_tuple = (
                     patient.id,
-                    bulk_dates[date_index],
+                    bulk_dates.pop(),
                     patient.doctor_id,
+                    office.id,
                 )
                 appointments.append(appointment_tuple)
-                date_index += 1
-            cursor.executemany(
-                "INSERT INTO appointment (patient_id, date, doctor_id) VALUES (%s, %s, %s)",
-                appointments,
-            )
-        return appointments
+        cursor.executemany(
+            "INSERT INTO appointment (patient_id, date, doctor_id, office_id) VALUES (%s, %s, %s, %s)",
+            appointments,
+        )
+        
 
     @classmethod
     def create_table(cls, cursor):
@@ -83,8 +125,10 @@ class Appointment:
                 patient_id INT,
                 date DATE,
                 doctor_id INT,
+                office_id INT,
                 FOREIGN KEY (patient_id) REFERENCES patient(id),
-                FOREIGN KEY (doctor_id) REFERENCES doctor(id)
+                FOREIGN KEY (doctor_id) REFERENCES doctor(id),
+                FOREIGN KEY (office_id) REFERENCES office(id)
             );
         """
         )
@@ -93,7 +137,7 @@ class Appointment:
 class LineItem:
     def __init__(self, created_at, amount, description, appointment_id):
         self.created_at = created_at
-        self.amount = amount
+        self.billed = amount
         self.description = description
         self.appointment_id = appointment_id
 
@@ -104,7 +148,7 @@ class LineItem:
         CREATE TABLE IF NOT EXISTS lineitem (
             id SERIAL PRIMARY KEY,
             created_at TIMESTAMPTZ,
-            amount NUMERIC(10, 2),
+            billed NUMERIC(10, 2),
             description TEXT,
             appointment_id INT,
             FOREIGN KEY (appointment_id) REFERENCES appointment(id)
@@ -114,24 +158,24 @@ class LineItem:
 
     @classmethod
     def populate(cls, cursor, n=1):
-        print("Populating the LineItem table . . .")
+        print(f"Populating the {cls.__name__} table...")
         cursor.execute("SELECT id FROM appointment;")
         appointment_ids = [row[0] for row in cursor.fetchall()]
+        line_items = []
         for appointment_id in appointment_ids:
-            line_items = []
             for _ in range(n):
                 line_item_tuple = (
                     datetime.now(),
-                    randint(100, 500),
+                    randint(10, 500),
                     f"Line item for appointment {appointment_id}",
                     appointment_id,
                 )
                 line_items.append(line_item_tuple)
 
-            cursor.executemany(
-                "INSERT INTO lineitem (created_at, amount, description, appointment_id) VALUES (%s, %s, %s, %s)",
-                line_items,
-            )
+        cursor.executemany(
+            "INSERT INTO lineitem (created_at, billed, description, appointment_id) VALUES (%s, %s, %s, %s)",
+            line_items,
+        )
 
 
 # New models
@@ -174,7 +218,7 @@ class CashPayment:
 
     @classmethod
     def populate(cls, cursor, n=1):
-        print("Populating the CashPayment table . . .")
+        print(f"Populating the {cls.__name__} table...")
 
         query = """
         SELECT l.id, a.patient_id, a.doctor_id 
@@ -185,8 +229,8 @@ class CashPayment:
         line_item_data = cursor.fetchall()
         payment_methods = ["Credit Card", "Cash", "Check"]
 
+        cash_payments = []
         for line_item_id, patient_id, doctor_id in line_item_data:
-            cash_payments = []
             for _ in range(n):
                 cash_payment_tuple = (
                     randint(100, 500),
@@ -198,10 +242,10 @@ class CashPayment:
                 )
                 cash_payments.append(cash_payment_tuple)
 
-            cursor.executemany(
-                "INSERT INTO cashpayment (amount, payment_method, created_at, patient_id, doctor_id, line_item_id) VALUES (%s, %s, %s, %s, %s, %s)",
-                cash_payments,
-            )
+        cursor.executemany(
+            "INSERT INTO cashpayment (amount, payment_method, created_at, patient_id, doctor_id, line_item_id) VALUES (%s, %s, %s, %s, %s, %s)",
+            cash_payments,
+        )
 
 
 class LineItemTransaction:
@@ -253,7 +297,7 @@ class LineItemTransaction:
 
     @classmethod
     def populate(cls, cursor, n=1):
-        print("Populating the LineItemTransaction table . . .")
+        print(f"Populating the {cls.__name__} table...")
 
         # Query the database to get lineitem details
         line_item_query = """
@@ -265,10 +309,10 @@ class LineItemTransaction:
         line_item_data = cursor.fetchall()
 
         claim_statuses = ["Pending", "Paid", "Rejected"]
-        adjustment_reasons = [-3, -2, -1, 1, 2]
+        adjustment_reasons = ["-3", "-2", "-1", "1", "2"]
 
+        line_item_transactions = []
         for line_item_id, appointment_id, doctor_id, patient_id in line_item_data:
-            line_item_transactions = []
             for _ in range(n):
                 is_credit = choice([True, False])
                 ins_paid = randint(50, 200) if is_credit else 0
@@ -293,18 +337,21 @@ class LineItemTransaction:
 
                 line_item_transactions.append(line_item_transaction_tuple)
 
-            cursor.executemany(
-                """INSERT INTO LineItemTransaction (
-                    is_archived, 
-                    claim_status, 
-                    trace_number, 
-                    posted_date, 
-                    adjustment, 
-                    ins_paid, 
-                    ins_idx, 
-                    adjustment_reason, 
-                    created_at, appointment_id, 
-                    doctor_id, patient_id, line_item_id
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-                line_item_transactions,
-            )
+        cursor.executemany(
+            """INSERT INTO LineItemTransaction (
+                is_archived, 
+                claim_status, 
+                trace_number, 
+                posted_date, 
+                adjustment, 
+                ins_paid, 
+                ins_idx, 
+                adjustment_reason, 
+                created_at, 
+                appointment_id, 
+                doctor_id, 
+                patient_id, 
+                line_item_id
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            line_item_transactions,
+        )

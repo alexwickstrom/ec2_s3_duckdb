@@ -1,11 +1,11 @@
 import os
-import pandas as pd
-import boto3
-
-from botocore.exceptions import ClientError
-from config import make_postgres_connection, get_s3_client
-from models import tables
 from time import sleep
+
+import boto3
+import pandas as pd
+from botocore.exceptions import ClientError
+from config import get_s3_client, make_postgres_connection
+from models import tables
 
 
 def dump_table_to_minio(cursor, table_name, bucket_name):

@@ -1,6 +1,5 @@
 import duckdb
 import polars as pl
-
 from models import tables
 from replicate_to_s3 import get_s3_client
 

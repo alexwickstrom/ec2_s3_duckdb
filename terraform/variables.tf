@@ -1,3 +1,9 @@
+variable "private_key" {
+  type    = string
+  default = "/Users/alex/.ssh/mtc_dev_key" # update with your own
+}
+
+
 variable "db_username" {
   description = "The username for the database"
   default     = "myuser"
@@ -10,5 +16,5 @@ variable "db_password" {
 
 variable "instance_type" {
   description = "EC2 instance type"
-  default     = "t2.micro"  # small instance
+  default     = "t2.small" # small instance
 }
