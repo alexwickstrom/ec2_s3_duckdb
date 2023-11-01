@@ -1,5 +1,7 @@
 import os
+
 import boto3
+import psycopg2
 import pymysql
 from botocore.client import Config
 
@@ -10,6 +12,16 @@ def make_mysql_connection():
         user=os.environ.get("MYSQL_USER"),
         password=os.environ.get("MYSQL_PASSWORD"),
         db=os.environ.get("MYSQL_DB"),
+    )
+
+
+def make_postgres_connection():
+    return psycopg2.connect(
+        host=os.environ.get("POSTGRES_HOST", "postgres"),
+        port=os.environ.get("POSTGRES_PORT", 5433),
+        dbname=os.environ.get("POSTGRES_DB", "mydatabase"),
+        user=os.environ.get("POSTGRES_USER", "postgres"),
+        password=os.environ.get("POSTGRES_PASSWORD", "mysecretpassword"),
     )
 
 

@@ -6,7 +6,7 @@ WORKDIR /app
 COPY ./app/Pipfile ./app/Pipfile.lock /app/
 
 # Install DuckDB
-RUN pip install pipenv && pipenv install ipython --system --deploy
+RUN pip install pipenv && pipenv install --system --deploy
 
 # Run shell by default
 CMD [ "bash" ]

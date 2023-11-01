@@ -13,6 +13,7 @@ RUN pip install pipenv && pipenv install --system --deploy
 COPY . /app/
 
 RUN chmod +x /app/entrypoint.sh
+RUN chown root:root /app/entrypoint.sh
 
 # Run entrypoint.sh when the container launches
-CMD ["/app/entrypoint.sh"]
+CMD ["/bin/sh", "-c", "/app/entrypoint.sh"]

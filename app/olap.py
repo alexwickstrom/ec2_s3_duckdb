@@ -1,5 +1,6 @@
 import duckdb
 import polars as pl
+from models import tables
 from replicate_to_s3 import get_s3_client
 
 
@@ -49,9 +50,16 @@ if __name__ == "__main__":
     con = duckdb.connect(database=":memory:", read_only=False)
 
     # List of table names to download and create in DuckDB
-    table_names = ["Doctor", "Patient", "Appointment"]
+    # table_names = [
+    #     "Doctor",
+    #     "Patient",
+    #     "Appointment",
+    #     "CashPayment",
+    #     "LineItem",
+    #     "LineItemTransaction",
+    # ]
 
-    for table_name in table_names:
+    for table_name in tables:
         # Download the Parquet file from S3
         parquet_path = download_parquet_from_s3(s3, table_name)
 

@@ -1,9 +1,11 @@
 import os
-import pandas as pd
-import boto3
+from time import sleep
 
+import boto3
+import pandas as pd
 from botocore.exceptions import ClientError
-from config import make_mysql_connection, get_s3_client
+from config import get_s3_client, make_postgres_connection
+from models import tables
 
 
 def dump_table_to_minio(cursor, table_name, bucket_name):
@@ -38,14 +40,14 @@ bucket_name = "my-bucket"
 
 # Establish MySQL connection and cursor
 if __name__ == "__main__":
-    connection = make_mysql_connection()
+    sleep(5)
+    connection = make_postgres_connection()
     cursor = connection.cursor()
 
-    # Tables to dump
-    tables = ["Doctor", "Patient", "Appointment"]
-
+    cursor.execute("SET search_path TO public;")
     # Dump each table to MinIO
     for table in tables:
+        print("Replicating {} to Parquet...".format(table))
         dump_table_to_minio(cursor, table, bucket_name)
 
     # Close the MySQL cursor and connection
