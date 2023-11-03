@@ -5,6 +5,18 @@ import psycopg2
 import pymysql
 from botocore.client import Config
 
+BASE_SCHEMA = "chronometer_production"
+
+tables = [
+    "doctor",
+    "patient",
+    "office",
+    "appointment",
+    "lineitem",
+    "cashpayment",
+    "lineitemtransaction",
+]
+
 
 def make_mysql_connection():
     return pymysql.connect(
@@ -42,3 +54,59 @@ def get_s3_client(creds=minio_config):
         aws_secret_access_key=creds["aws_secret_access_key"],
         config=Config(signature_version="s3v4"),
     )
+
+
+def print_tables_in_schema(connection, schema=BASE_SCHEMA):
+    print("Printing tables in schema:")
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = %s
+        """,
+            (schema,),
+        )
+
+        tables = cursor.fetchall()
+        for (table,) in tables:
+            print(table)
+    print()
+
+
+def truncate_tables(connection):
+    with connection.cursor() as cursor:
+        for table_name in tables:
+            cursor.execute(
+                "DROP TABLE IF EXISTS {}.{} CASCADE;".format(BASE_SCHEMA, table_name)
+            )
+
+
+def set_up_schemas(connection):
+    with connection.cursor() as cursor:
+        cursor.execute(f"CREATE SCHEMA IF NOT EXISTS {BASE_SCHEMA};")
+        cursor.execute("CREATE SCHEMA IF NOT EXISTS dev;")
+
+
+def assert_tables(connection, table_classes):
+    with connection.cursor() as cursor:
+        for tc in table_classes:
+            # Split schema and table name if it's provided in the format "schema.table"
+            schema, table_name = (
+                tc.TABLE_NAME.split(".")
+                if "." in tc.TABLE_NAME
+                else (None, tc.TABLE_NAME)
+            )
+
+            # Query to check the existence of a table (and schema if provided)
+            if schema:
+                cursor.execute(
+                    "SELECT to_regclass(%s) IS NOT NULL", (f"{schema}.{table_name}",)
+                )
+            else:
+                cursor.execute("SELECT to_regclass(%s) IS NOT NULL", (table_name,))
+
+            # Fetch the result
+            table_exists = cursor.fetchone()[0]
+            if not table_exists:
+                raise ValueError(f"Table {tc.TABLE_NAME} does not exist.")

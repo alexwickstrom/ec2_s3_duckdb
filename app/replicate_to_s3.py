@@ -4,13 +4,13 @@ from time import sleep
 import boto3
 import pandas as pd
 from botocore.exceptions import ClientError
-from config import get_s3_client, make_postgres_connection
+from config import BASE_SCHEMA, get_s3_client, make_postgres_connection
 from models import tables
 
 
 def dump_table_to_minio(cursor, table_name, bucket_name):
     # Fetch data from MySQL into a Pandas DataFrame
-    query = f"SELECT * FROM {table_name}"
+    query = f"SELECT * FROM {BASE_SCHEMA}.{table_name}"
     df = pd.read_sql(query, con=cursor.connection)
 
     # Save the DataFrame to a Parquet file
