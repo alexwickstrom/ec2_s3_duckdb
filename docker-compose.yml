@@ -14,7 +14,20 @@ services:
       postgres:
         condition: service_healthy
       
-
+  dbt:
+    build: ./dbt/
+    volumes:
+      - ./dbt:/dbt
+    working_dir: /dbt
+    environment:
+      - DBT_PROFILES_DIR=/dbt/
+      - POSTGRES_HOST=postgres
+    env_file:
+      - ./.env
+    depends_on:
+      - postgres
+        
+      
   minio:
     image: minio/minio
     volumes:

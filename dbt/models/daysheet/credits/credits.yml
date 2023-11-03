@@ -1,0 +1,8 @@
+version: 1
+
+models:
+  - name: daysheet_credits_mv
+    columns:
+      - name: doctor_id
+    
+
