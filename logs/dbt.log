@@ -1,0 +1,30 @@
+[0m16:26:09.788287 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10739bb50>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1073b3610>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1073cbfd0>]}
+
+
+============================== 16:26:09.797161 | b63cadf0-7112-4864-87b4-aa43b5b520ad ==============================
+[0m16:26:09.797161 [info ] [MainThread]: Running with dbt=1.7.0
+[0m16:26:09.798354 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'write_json': 'True', 'log_cache_events': 'False', 'partial_parse': 'True', 'cache_selected_only': 'False', 'warn_error': 'None', 'debug': 'False', 'fail_fast': 'False', 'log_path': 'logs', 'version_check': 'True', 'profiles_dir': '/Users/alex/.dbt', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'log_format': 'default', 'invocation_command': 'dbt compile', 'static_parser': 'True', 'introspect': 'True', 'target_path': 'None', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'send_anonymous_usage_stats': 'True'}
+[0m16:26:09.799479 [error] [MainThread]: Encountered an error:
+Runtime Error
+  No dbt_project.yml found at expected path /Users/alex/venvs/practice/infra/ec2_s3_duckdb/dbt_project.yml
+  Verify that each entry within packages.yml (and their transitive dependencies) contains a file named dbt_project.yml
+  
+[0m16:26:09.802460 [debug] [MainThread]: Resource report: {"command_name": "compile", "command_wall_clock_time": 0.12367207, "process_user_time": 3.233765, "process_kernel_time": 0.407723, "process_mem_max_rss": "105095168", "command_success": false, "process_in_blocks": "0", "process_out_blocks": "0"}
+[0m16:26:09.803775 [debug] [MainThread]: Command `dbt compile` failed at 16:26:09.803343 after 0.12 seconds
+[0m16:26:09.804657 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1073d90d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1025c7010>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x106c38850>]}
+[0m16:26:09.806139 [debug] [MainThread]: Flushing usage events
+[0m16:31:45.630613 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'start', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10879f4d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1087af3d0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1087affd0>]}
+
+
+============================== 16:31:45.639617 | e8329745-d5be-4900-b902-1ce0fe2d974c ==============================
+[0m16:31:45.639617 [info ] [MainThread]: Running with dbt=1.7.0
+[0m16:31:45.640652 [debug] [MainThread]: running dbt with arguments {'printer_width': '80', 'indirect_selection': 'eager', 'log_cache_events': 'False', 'write_json': 'True', 'partial_parse': 'True', 'cache_selected_only': 'False', 'profiles_dir': '/Users/alex/.dbt', 'version_check': 'True', 'warn_error': 'None', 'log_path': 'logs', 'debug': 'False', 'fail_fast': 'False', 'use_colors': 'True', 'use_experimental_parser': 'False', 'no_print': 'None', 'quiet': 'False', 'log_format': 'default', 'invocation_command': 'dbt compile', 'static_parser': 'True', 'warn_error_options': 'WarnErrorOptions(include=[], exclude=[])', 'target_path': 'None', 'introspect': 'True', 'send_anonymous_usage_stats': 'True'}
+[0m16:31:45.641763 [error] [MainThread]: Encountered an error:
+Runtime Error
+  No dbt_project.yml found at expected path /Users/alex/venvs/practice/infra/ec2_s3_duckdb/dbt_project.yml
+  Verify that each entry within packages.yml (and their transitive dependencies) contains a file named dbt_project.yml
+  
+[0m16:31:45.644054 [debug] [MainThread]: Resource report: {"command_name": "compile", "command_wall_clock_time": 0.101342484, "process_user_time": 2.80001, "process_kernel_time": 0.359316, "process_mem_max_rss": "102903808", "command_success": false, "process_in_blocks": "0", "process_out_blocks": "0"}
+[0m16:31:45.645119 [debug] [MainThread]: Command `dbt compile` failed at 16:31:45.644845 after 0.10 seconds
+[0m16:31:45.645879 [debug] [MainThread]: Sending event: {'category': 'dbt', 'action': 'invocation', 'label': 'end', 'context': [<snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x10399b010>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1087bfed0>, <snowplow_tracker.self_describing_json.SelfDescribingJson object at 0x1087bfe50>]}
+[0m16:31:45.646588 [debug] [MainThread]: Flushing usage events

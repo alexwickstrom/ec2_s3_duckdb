@@ -1,0 +1,105 @@
+version: 1
+
+sources:
+  - name: chronometer_production
+    tables:
+      - name: appointment
+        columns:
+          - name: id
+            data_type: integer
+          - name: patient_id
+            data_type: integer
+          - name: date
+            data_type: date
+          - name: doctor_id
+            data_type: integer
+          - name: office_id
+            data_type: integer
+
+      - name: cashpayment
+        columns:
+          - name: id
+            data_type: integer
+          - name: amount
+            data_type: numeric
+          - name: payment_method
+            data_type: text
+          - name: created_at
+            data_type: timestamp with time zone
+          - name: patient_id
+            data_type: integer
+          - name: doctor_id
+            data_type: integer
+          - name: line_item_id
+            data_type: integer
+
+      - name: doctor
+        columns:
+          - name: id
+            data_type: integer
+          - name: name
+            data_type: character varying
+
+      - name: lineitem
+        columns:
+          - name: id
+            data_type: integer
+          - name: created_at
+            data_type: timestamp with time zone
+          - name: billed
+            data_type: numeric
+          - name: description
+            data_type: text
+          - name: appointment_id
+            data_type: integer
+
+      - name: lineitemtransaction
+        columns:
+          - name: id
+            data_type: integer
+          - name: is_archived
+            data_type: boolean
+          - name: claim_status
+            data_type: text
+          - name: trace_number
+            data_type: text
+          - name: posted_date
+            data_type: date
+          - name: adjustment
+            data_type: numeric
+          - name: ins_paid
+            data_type: numeric
+          - name: ins_idx
+            data_type: integer
+          - name: adjustment_reason
+            data_type: integer
+          - name: created_at
+            data_type: timestamp with time zone
+          - name: appointment_id
+            data_type: integer
+          - name: doctor_id
+            data_type: integer
+          - name: patient_id
+            data_type: integer
+          - name: line_item_id
+            data_type: integer
+
+      - name: office
+        columns:
+          - name: id
+            data_type: integer
+          - name: name
+            data_type: character varying
+          - name: doctor_id
+            data_type: integer
+
+      - name: patient
+        columns:
+          - name: id
+            data_type: integer
+          - name: name
+            data_type: character varying
+          - name: age
+            data_type: integer
+          - name: doctor_id
+            data_type: integer

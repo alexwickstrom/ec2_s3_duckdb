@@ -1,8 +1,8 @@
 {{ config(
     materialized = 'view',
+    on_configuration_change = 'apply',
 ) }}
-CREATE MATERIALIZED VIEW public.daysheet_credits_mv 
-AS
+
 SELECT 
     lit.id,
     lit.adjustment,
@@ -25,4 +25,3 @@ JOIN doctor cd ON (cd.id = ca.doctor_id)
 WHERE 
     lit.ins_paid <> 0 
     OR lit.adjustment_reason in ('1', '2')
-;

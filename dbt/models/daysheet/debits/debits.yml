@@ -4,5 +4,7 @@ models:
   - name: daysheet_debits_mv
     columns:
       - name: doctor_id
-        tests: not_null
+        tests: 
+          - not_null
+        
 

@@ -113,4 +113,4 @@ if __name__ == "__main__":
     assert_tables(connection, table_classes)
     populate_tables(connection, num_doctors=10)  # start small just to test every table
     populate_tables(connection, num_doctors=490)
-    # make_mvs(connection)
+    make_mvs(connection)

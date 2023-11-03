@@ -1,4 +1,5 @@
-ds_pp_creation_sql = """CREATE MATERIALIZED VIEW public.daysheet_patientpayments_mv
+from ..models import CashPayment, LineItem
+ds_pp_creation_sql = f"""CREATE MATERIALIZED VIEW public.daysheet_patientpayments_mv
 AS
 SELECT 
     bcp.id,
@@ -7,8 +8,8 @@ SELECT
     bcp.doctor_id,
     bcp.patient_id, 
     bli.description as code
-FROM cashpayment bcp 
-JOIN lineitem bli ON (bcp.line_item_id = bli.id)
+FROM {CashPayment.TABLE_NAME} bcp 
+JOIN {LineItem.TABLE_NAME} bli ON (bcp.line_item_id = bli.id)
 WHERE bcp.amount <>0;
 """
 

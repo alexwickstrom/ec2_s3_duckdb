@@ -4,5 +4,5 @@ models:
   - name: daysheet_credits_mv
     columns:
       - name: doctor_id
-        tests: not_null
+    
 

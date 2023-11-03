@@ -32,6 +32,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   everhealth_product_reporting:
-    # Config indicated by + and applies to all files under models/example/
-    example:
-      +materialized: view
+    daysheet:
+      +tags:
+        - "DaySheet"
+      cash:
+        +materialized: materialized_view
+        
+      credits:
+        +materialized: materialized_view
+

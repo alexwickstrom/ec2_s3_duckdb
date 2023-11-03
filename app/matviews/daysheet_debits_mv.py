@@ -1,4 +1,6 @@
-ds_debits_creation_sql = """CREATE MATERIALIZED VIEW public.daysheet_debits_mv
+from ..models import Appointment, Doctor, LineItem, Office, Patient
+
+ds_debits_creation_sql = f"""CREATE MATERIALIZED VIEW public.daysheet_debits_mv
 AS
 SELECT 
     bli.id,
@@ -10,10 +12,10 @@ SELECT
     cd.name as doctor_name,
     bli.appointment_id,
     ca.date as appt_created_at
-FROM lineitem bli
-JOIN appointment ca ON (bli.appointment_id = ca.id)
-JOIN doctor cd ON (ca.doctor_id = cd.id)
-JOIN patient cp ON (ca.patient_id = cp.id);
+FROM {LineItem.TABLE_NAME} bli
+JOIN {Appointment.TABLE_NAME} ca ON (bli.appointment_id = ca.id)
+JOIN {Doctor.TABLE_NAME} cd ON (ca.doctor_id = cd.id)
+JOIN {Patient.TABLE_NAME} cp ON (ca.patient_id = cp.id);
 """
 
 ds_debits_index_sql = (
