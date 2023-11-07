@@ -49,7 +49,7 @@ destroy-lightdash:
 
 rebuild-lightdash:
 	minikube start --memory=4096 --cpus=2 --driver=docker
-	helm install lightdash lightdash/lightdash -n lightdash -f values.yaml
+	helm install lightdash lightdash/lightdash -n lightdash -f k8s/lightdash/values.yaml
 
 show-lightdash: 
 	kubectl get svc -n lightdash && \

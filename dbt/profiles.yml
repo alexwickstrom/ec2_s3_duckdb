@@ -4,21 +4,23 @@ everhealth_product_reporting:
     dev:
       type: postgres
       threads: 1  # Set the number of threads according to your requirements
-      host: "{{ env_var('POSTGRES_HOST') }}"
-      port: "{{ env_var('POSTGRES_PORT') | as_number}}"
-      user: "{{ env_var('POSTGRES_USER') }}"
-      pass: "{{ env_var('POSTGRES_PASSWORD') }}"
-      dbname: "{{ env_var('POSTGRES_DB') }}"
-      schema: dev_schema  # Update this with your actual schema for development
+      host: "{{ env_var('POSTGRES_HOST_PROD') }}"
+      port: "{{ env_var('POSTGRES_PORT_PROD') | as_number}}"
+      user: "{{ env_var('POSTGRES_USER_PROD') }}"
+      pass: "{{ env_var('POSTGRES_PASSWORD_PROD') }}"
+      dbname: postgres
+      schema: public  # Update this with your actual schema for development
 
     prod:
       type: postgres
-      threads: 1  # Set the number of threads according to your requirements
-      host: "{{ env_var('POSTGRES_HOST') }}"
-      port: "{{ env_var('POSTGRES_PORT') | as_number }}"
-      user: prod_username  # Replace with your production username
-      pass: prod_password  # Replace with your production password
-      dbname: "{{ env_var('POSTGRES_DB') }}"
-      schema: prod_schema  # Update this with your actual schema for production
+      threads: 2  # Set the number of threads according to your requirements
+      host: eh-reporting-pg-dev.c1blpswdyogc.us-east-2.rds.amazonaws.com
+      port: 5432
+      user: postgres  # Replace with your production username
+      pass: E2D61v9DnOT1  # Replace with your production password
+      dbname: postgres
+      schema: public  # Update this with your actual schema for production
 
-  target: dev
+  target: prod
+
+  # to connect: psql --host=eh-reporting-pg-dev.c1blpswdyogc.us-east-2.rds.amazonaws.com --port=5432 --username=postgres --password --dbname=postgres

@@ -1,4 +1,4 @@
-from ..models import Appointment, Doctor, LineItem, Office, Patient
+from models import Appointment, Doctor, LineItem, Office, Patient
 
 ds_debits_creation_sql = f"""CREATE MATERIALIZED VIEW public.daysheet_debits_mv
 AS

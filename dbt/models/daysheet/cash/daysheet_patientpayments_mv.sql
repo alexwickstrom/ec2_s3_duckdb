@@ -9,6 +9,6 @@ SELECT
     bcp.doctor_id,
     bcp.patient_id, 
     bli.description as code
-FROM {{ source('chronometer_production','cashpayment') }} bcp  
-JOIN {LineItem {{ source('chronometer_production','lineitem') }} bli ON (bcp.line_item_id = bli.id)
+FROM {{ source('chronometer_production','billing_cashpayment') }} bcp  
+JOIN {{ source('chronometer_production','billing_billinglineitem') }} bli ON (bcp.line_item_id = bli.id)
 WHERE bcp.amount <>0

@@ -5,16 +5,17 @@ import psycopg2
 import pymysql
 from botocore.client import Config
 
+env_profile = "PROD"
 BASE_SCHEMA = "chronometer_production"
 
 tables = [
-    "doctor",
-    "patient",
-    "office",
-    "appointment",
-    "lineitem",
-    "cashpayment",
-    "lineitemtransaction",
+    "chronometer_doctor",
+    "chronometer_patient",
+    "chronometer_office",
+    "chronometer_appointment",
+    "billing_billinglineitem",
+    "billing_cashpayment",
+    "billing_lineitemtransaction",
 ]
 
 
@@ -28,13 +29,32 @@ def make_mysql_connection():
 
 
 def make_postgres_connection():
-    return psycopg2.connect(
-        host=os.environ.get("POSTGRES_HOST", "postgres"),
-        port=os.environ.get("POSTGRES_PORT", 5433),
-        dbname=os.environ.get("POSTGRES_DB", "mydatabase"),
-        user=os.environ.get("POSTGRES_USER", "postgres"),
-        password=os.environ.get("POSTGRES_PASSWORD", "mysecretpassword"),
-    )
+    if env_profile == "PROD":
+        print([x for x in os.environ if "POSTGRES" in x])
+        prod_credentials = {
+            "host": os.environ.get("POSTGRES_HOST_PROD", "postgres"),
+            "port": os.environ.get("POSTGRES_PORT_PROD", 5433),
+            "dbname": os.environ.get("POSTGRES_DB_PROD", "mydatabase"),
+            "user": os.environ.get("POSTGRES_USER_PROD", "postgres"),
+            "password": os.environ.get("POSTGRES_PASSWORD_PROD", "mysecretpassword"),
+        }
+        try:
+            return psycopg2.connect(**prod_credentials)
+        except Exception as e:
+            print(prod_credentials)
+            print("Broken? What's dfferent?")
+    elif env_profile == "DEV":
+        return psycopg2.connect(
+            host=os.environ.get("POSTGRES_HOST", "postgres"),
+            port=os.environ.get("POSTGRES_PORT", 5433),
+            dbname=os.environ.get("POSTGRES_DB", "mydatabase"),
+            user=os.environ.get("POSTGRES_USER", "postgres"),
+            password=os.environ.get("POSTGRES_PASSWORD", "mysecretpassword"),
+        )
+    else:
+        raise NotImplementedError(
+            "You need to specify an env_profile in config.py: PROD or DEV"
+        )
 
 
 minio_config = {
@@ -80,6 +100,18 @@ def truncate_tables(connection):
             cursor.execute(
                 "DROP TABLE IF EXISTS {}.{} CASCADE;".format(BASE_SCHEMA, table_name)
             )
+
+
+def vacuum(conn, table_name):
+    old_isolation_level = conn.isolation_level
+    conn.set_isolation_level(0)  # Set autocommit mode
+    cursor = conn.cursor()
+    cursor.execute(f"VACUUM (VERBOSE, ANALYZE) {table_name};")
+    cursor.close()
+    conn.set_isolation_level(old_isolation_level)  # Reset the isolation level
+
+
+# Usage
 
 
 def set_up_schemas(connection):

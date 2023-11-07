@@ -2,7 +2,34 @@ version: 1
 
 models:
   - name: daysheet_credits_mv
+    description: "Credits and Adjustments from insurance payers"
     columns:
       - name: doctor_id
+        data_type: integer
+      - name: ins_paid
+        data_type: decimal
+        meta: 
+          metrics:
+            credits:
+                type: sum
+                label: "Credits"
+      - name: adjustment
+        data_type: decimal
+        meta: 
+          metrics:
+            adjustments:
+              type: sum
+              label: "Adjustments"
+      - name: ins_idx
+        data_type: integer
+      - name: created_at
+      - name: posted_date
+      - name: patient_id
+      - name: office_name
+      - name: patient_name
+      - name: doctor_name
+      - name: appointment_id
+        label: "Appointment ID"
+      
     
 

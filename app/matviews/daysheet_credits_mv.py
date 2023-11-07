@@ -1,4 +1,5 @@
-from ..models import Appointment, Doctor, LineItemTransaction, Office, Patient
+from models import Appointment, Doctor, LineItemTransaction, Office, Patient
+
 ds_credits_creation_sql = f"""CREATE MATERIALIZED VIEW public.daysheet_credits_adjustments_mv 
 AS
 SELECT 
@@ -16,7 +17,7 @@ SELECT
     co.name as office_name,
     cd.name as doctor_name
 FROM {LineItemTransaction.TABLE_NAME} lit
-JOIN {Appointment.TABLE_NAME} ca ON (lit.appointm ent_id = ca.id)
+JOIN {Appointment.TABLE_NAME} ca ON (lit.appointment_id = ca.id)
 JOIN {Patient.TABLE_NAME} pt ON (ca.patient_id = pt.id)
 JOIN {Office.TABLE_NAME} co ON (ca.office_id = co.id)
 JOIN {Doctor.TABLE_NAME} cd ON (cd.id = ca.doctor_id)

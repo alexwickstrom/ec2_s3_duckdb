@@ -2,7 +2,16 @@ version: 1
 
 models:
   - name: daysheet_patientpayments_mv
+    description: "CashPayments from patients."
+    config:  
+      materialized: table
     columns:
       - name: doctor_id
-      
-
+        data_type: integer
+      - name: amount
+        meta: 
+          metrics:
+            patient_payment:
+              type: sum
+              label: "Patient Payments"
+    

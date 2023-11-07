@@ -6,8 +6,9 @@ name = "pypi"
 [packages]
 polars = "*"
 psycopg2-binary = "*"
-dbt-core = "*"
+dbt-core = "==1.5.0"
 dbt-redshift = "*"
+tqdm = "*"
 
 [dev-packages]
 

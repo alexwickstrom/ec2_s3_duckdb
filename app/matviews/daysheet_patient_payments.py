@@ -1,4 +1,5 @@
-from ..models import CashPayment, LineItem
+from models import CashPayment, LineItem
+
 ds_pp_creation_sql = f"""CREATE MATERIALIZED VIEW public.daysheet_patientpayments_mv
 AS
 SELECT 

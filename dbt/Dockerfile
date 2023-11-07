@@ -46,7 +46,7 @@ ENV LANG=C.UTF-8
 
 # Update python
 RUN python -m pip install --upgrade pip setuptools wheel --no-cache-dir
-
+EXPOSE 8080
 # Set docker basics
 WORKDIR /dbt/
 #ENTRYPOINT ["dbt"]

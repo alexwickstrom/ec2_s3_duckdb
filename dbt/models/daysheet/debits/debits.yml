@@ -2,9 +2,20 @@ version: 1
 
 models:
   - name: daysheet_debits_mv
+    description: "Charges from appointments."
     columns:
       - name: doctor_id
+        data_type: int
         tests: 
           - not_null
+      - name: billed
+        data_type: 
+        meta: 
+          metrics:
+            debit:
+              type: sum
+              label: "Charges"
+      - name: appt_created_at
+        data_type: date
         
 

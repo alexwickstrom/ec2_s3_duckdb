@@ -1,15 +1,17 @@
 from datetime import datetime
 from random import choice, randint
-
-from config import BASE_SCHEMA, tables
+from tqdm import tqdm
+from config import BASE_SCHEMA, tables, vacuum
 from faker import Faker
 from psycopg2 import sql
+from numpy.random import randint as np_randint
+import sys
 
 fake = Faker()
 
 
 class Doctor:
-    TABLE_NAME = f"{BASE_SCHEMA}.doctor"
+    TABLE_NAME = f"{BASE_SCHEMA}.chronometer_doctor"
 
     def __init__(self, id=None, name=None):
         self.id = id or None
@@ -20,7 +22,7 @@ class Doctor:
         print(f"Creating {cls.TABLE_NAME}")
         cursor.execute(
             f"""
-            CREATE TABLE IF NOT EXISTS {BASE_SCHEMA}.doctor (
+            CREATE TABLE IF NOT EXISTS {cls.TABLE_NAME} (
                 id SERIAL PRIMARY KEY,
                 name VARCHAR(255)
             );
@@ -33,7 +35,7 @@ class Doctor:
         doctors = [cls(name=fake.name()) for i in range(n)]
         for doctor in doctors:
             cursor.execute(
-                f"INSERT INTO {BASE_SCHEMA}.doctor (name) VALUES (%s) RETURNING id",
+                f"INSERT INTO {cls.TABLE_NAME} (name) VALUES (%s) RETURNING id",
                 (doctor.name,),
             )
             doctor_id = cursor.fetchone()[0]
@@ -42,7 +44,7 @@ class Doctor:
 
 
 class Patient:
-    TABLE_NAME = f"{BASE_SCHEMA}.patient"
+    TABLE_NAME = f"{BASE_SCHEMA}.chronometer_patient"
 
     def __init__(self, name=None, age=None, doctor_id=None, id=None):
         self.id = id or None
@@ -58,7 +60,7 @@ class Patient:
                 name VARCHAR(255),
                 age INT,
                 doctor_id INT,
-                FOREIGN KEY (doctor_id) REFERENCES {BASE_SCHEMA}.doctor(id)
+                FOREIGN KEY (doctor_id) REFERENCES {BASE_SCHEMA}.chronometer_doctor(id)
             );"""
         )
 
@@ -70,12 +72,9 @@ class Patient:
         patients = [cls(doctor_id=doctor.id) for doctor in doctors for _ in range(n)]
         last_ids = []
         for patient in patients:
-            query = sql.SQL(
-                """
-                INSERT INTO {}.{} (name, age, doctor_id)
-                VALUES (%s, %s, %s) RETURNING id
-                """
-            ).format(sql.Identifier(schema_name), sql.Identifier(table_name))
+            query = f"""INSERT INTO {cls.TABLE_NAME} (name, age, doctor_id)
+                VALUES (%s, %s, %s) RETURNING id;
+            """
             cursor.execute(
                 query,
                 (patient.name, patient.age, patient.doctor_id),
@@ -87,7 +86,7 @@ class Patient:
 
 
 class Office:
-    TABLE_NAME = f'"{BASE_SCHEMA}"."office"'
+    TABLE_NAME = f'"{BASE_SCHEMA}"."chronometer_office"'
 
     def __init__(self, name=None, doctor_id=None, id=None):
         self.id = id or None
@@ -128,7 +127,7 @@ class Office:
 
 
 class Appointment:
-    TABLE_NAME = f"{BASE_SCHEMA}.appointment"
+    TABLE_NAME = f"{BASE_SCHEMA}.chronometer_appointment"
 
     def __init__(self, patient_id, doctor_id, office_id, date=None):
         self.patient_id = patient_id
@@ -137,7 +136,7 @@ class Appointment:
         self.date = date if date else Faker().date_this_decade()
 
     @classmethod
-    def populate(cls, cursor, patients, offices, n=1):
+    def populate(cls, cursor, patients, offices, n=1, batch_size=200):
         print(f"Populating the {cls.__name__} table...")
         faker = Faker()
         total_appointments = len(patients) * n
@@ -147,43 +146,53 @@ class Appointment:
             filtered_offices = [
                 office for office in offices if office.doctor_id == patient.doctor_id
             ]
-            for _ in range(n):
-                office = choice(filtered_offices)
-                appointment_tuple = (
-                    patient.id,
-                    bulk_dates.pop(),
-                    patient.doctor_id,
-                    office.id,
-                )
-                appointments.append(appointment_tuple)
+            appointments.extend(
+                [
+                    (
+                        patient.id,
+                        bulk_dates.pop(),
+                        patient.doctor_id,
+                        choice(filtered_offices).id,
+                    )
+                    for _ in range(n)
+                ]
+            )
+
+            # Check if we've accumulated enough appointments to make a batch insert
+            if len(appointments) >= batch_size:
+                print(f"Inserting appt batch of size {batch_size}")
+                cls.insert_appointments(cursor, appointments)
+                appointments.clear()  # Clear the list after inserting
+
+        # Insert any remaining appointments that didn't make a full batch
+        if appointments:
+            cls.insert_appointments(cursor, appointments)
+
+    @classmethod
+    def insert_appointments(cls, cursor, appointments):
         query = f"INSERT INTO {cls.TABLE_NAME} (patient_id, date, doctor_id, office_id) VALUES (%s, %s, %s, %s)"
-        print(query)
-        cursor.executemany(
-            query,
-            appointments,
-        )
+        cursor.executemany(query, appointments)
 
     @classmethod
     def create_table(cls, cursor):
-        cursor.execute(f"SET search_path to {BASE_SCHEMA};")
         cursor.execute(
             f"""
-            CREATE TABLE IF NOT EXISTS {BASE_SCHEMA}.appointment (
+            CREATE TABLE IF NOT EXISTS {Appointment.TABLE_NAME} (
                 id SERIAL PRIMARY KEY,
                 patient_id INT,
                 date DATE,
                 doctor_id INT,
                 office_id INT,
-                FOREIGN KEY (patient_id) REFERENCES {BASE_SCHEMA}.patient(id),
-                FOREIGN KEY (doctor_id) REFERENCES {BASE_SCHEMA}.doctor(id),
-                FOREIGN KEY (office_id) REFERENCES {BASE_SCHEMA}.office(id)
+                FOREIGN KEY (patient_id) REFERENCES {Patient.TABLE_NAME}(id),
+                FOREIGN KEY (doctor_id) REFERENCES {Doctor.TABLE_NAME}(id),
+                FOREIGN KEY (office_id) REFERENCES {Office.TABLE_NAME}(id)
             );
         """
         )
 
 
 class LineItem:
-    TABLE_NAME = f'"{BASE_SCHEMA}"."lineitem"'
+    TABLE_NAME = f"{BASE_SCHEMA}.billing_billinglineitem"
 
     def __init__(self, created_at, amount, description, appointment_id):
         self.created_at = created_at
@@ -193,45 +202,52 @@ class LineItem:
 
     @classmethod
     def create_table(cls, cursor):
-        cursor.execute(f"SET search_path to {BASE_SCHEMA};")
         cursor.execute(
             f"""
-        CREATE TABLE IF NOT EXISTS lineitem (
+        CREATE TABLE IF NOT EXISTS {cls.TABLE_NAME} (
             id SERIAL PRIMARY KEY,
             created_at TIMESTAMPTZ,
             billed NUMERIC(10, 2),
             description TEXT,
             appointment_id INT,
-            FOREIGN KEY (appointment_id) REFERENCES {BASE_SCHEMA}.appointment(id)
+            FOREIGN KEY (appointment_id) REFERENCES {Appointment.TABLE_NAME}(id)
         );
         """
         )
 
     @classmethod
-    def populate(cls, cursor, n=1):
+    def populate(cls, cursor, n=1, batch_size=128):
         print(f"Populating the {cls.__name__} table...")
         cursor.execute(f"SELECT id FROM {Appointment.TABLE_NAME};")
         appointment_ids = [row[0] for row in cursor.fetchall()]
         line_items = []
-        descriptions = [Faker().sentence(nb_words=6) for _ in range(15)]
-        for appointment_id in appointment_ids:
-            for _ in range(n):
-                line_item_tuple = (
-                    datetime.now(),  # created_at
-                    randint(10, 500),  # billed
-                    choice(descriptions),  # description
-                    appointment_id,
-                )
-                line_items.append(line_item_tuple)
-
-        cursor.executemany(
-            "INSERT INTO lineitem (created_at, billed, description, appointment_id) VALUES (%s, %s, %s, %s)",
-            line_items,
+        billed_amounts = (
+            np_randint(10, 500, len(appointment_ids) * n).astype(int).tolist()
         )
+        descriptions = [Faker().sentence(nb_words=6) for _ in range(15)]
+        print(f"    Generating the {len(appointment_ids)} dummy rows for LineItem...")
+        line_items = [
+            (
+                datetime.now(),  # created_at
+                billed_amounts[i * n + j],
+                choice(descriptions),  # description
+                appointment_id,
+            )
+            for i, appointment_id in enumerate(appointment_ids)
+            for j in range(n)
+        ]
+        print("    Inserting batches into LineItem")
+        for i in range(0, len(line_items), batch_size):
+            print(f"INSERT batch {i}")
+            batch = line_items[i : i + batch_size]
+            cursor.executemany(
+                f"INSERT INTO {cls.TABLE_NAME} (created_at, billed, description, appointment_id) VALUES (%s, %s, %s, %s)",
+                batch,
+            )
 
 
 class CashPayment:
-    TABLE_NAME = f'"{BASE_SCHEMA}"."cashpayment"'
+    TABLE_NAME = f"{BASE_SCHEMA}.billing_cashpayment"
 
     def __init__(
         self,
@@ -262,25 +278,25 @@ class CashPayment:
                 patient_id INT,
                 doctor_id INT,
                 line_item_id INT,
-                FOREIGN KEY (patient_id) REFERENCES {BASE_SCHEMA}.patient(id),
-                FOREIGN KEY (doctor_id) REFERENCES {BASE_SCHEMA}.doctor(id),
-                FOREIGN KEY (line_item_id) REFERENCES {BASE_SCHEMA}.lineitem(id)
+                FOREIGN KEY (patient_id) REFERENCES {Patient.TABLE_NAME}(id),
+                FOREIGN KEY (doctor_id) REFERENCES {Doctor.TABLE_NAME}(id),
+                FOREIGN KEY (line_item_id) REFERENCES {LineItem.TABLE_NAME}(id)
             );
             """
         )
 
     @classmethod
-    def populate(cls, cursor, n=1):
+    def populate(cls, cursor, n=1, batch_size=256):
         print(f"Populating the {cls.__name__} table...")
         query = f"""
         SELECT l.id, a.patient_id, a.doctor_id 
-        FROM {BASE_SCHEMA}.lineitem l
-        JOIN {BASE_SCHEMA}.appointment a ON (l.appointment_id = a.id);
+        FROM  {LineItem.TABLE_NAME} l
+        JOIN {Appointment.TABLE_NAME} a ON (l.appointment_id = a.id);
         """
         cursor.execute(query)
         line_item_data = cursor.fetchall()
         payment_methods = ["Credit Card", "Cash", "Check"]
-
+        print(f"    making cashpayments from {len(line_item_data)} lineitems")
         cash_payments = []
         created_at = datetime.now()
         for line_item_id, patient_id, doctor_id in line_item_data:
@@ -294,15 +310,17 @@ class CashPayment:
                     line_item_id,
                 )
                 cash_payments.append(cash_payment_tuple)
-
-        cursor.executemany(
-            f"INSERT INTO {BASE_SCHEMA}.cashpayment (amount, payment_method, created_at, patient_id, doctor_id, line_item_id) VALUES (%s, %s, %s, %s, %s, %s)",
-            cash_payments,
-        )
+                # Batch insert cash_payments
+        for i in range(0, len(cash_payments), batch_size):
+            print(f"Inserting cashpayments batch {i}")
+            cursor.executemany(
+                f"INSERT INTO {cls.TABLE_NAME} (amount, payment_method, created_at, patient_id, doctor_id, line_item_id) VALUES (%s, %s, %s, %s, %s, %s)",
+                cash_payments[i : i + batch_size],
+            )
 
 
 class LineItemTransaction:
-    TABLE_NAME = f'"{BASE_SCHEMA}"."lineitemtransaction"'
+    TABLE_NAME = f"{BASE_SCHEMA}.billing_lineitemtransaction"
 
     def __init__(
         self,
@@ -351,7 +369,7 @@ class LineItemTransaction:
         )
 
     @classmethod
-    def populate(cls, cursor, n=1):
+    def populate(cls, cursor, n=1, batch_size=256):
         print(f"Populating the {cls.__name__} table...")
 
         # Query the database to get lineitem details
@@ -394,21 +412,24 @@ class LineItemTransaction:
 
                 line_item_transactions.append(line_item_transaction_tuple)
 
-        cursor.executemany(
-            f"""INSERT INTO {cls.TABLE_NAME} (
-                is_archived, 
-                claim_status, 
-                trace_number, 
-                posted_date, 
-                adjustment, 
-                ins_paid, 
-                ins_idx, 
-                adjustment_reason, 
-                created_at, 
-                appointment_id, 
-                doctor_id, 
-                patient_id, 
-                line_item_id
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
-            line_item_transactions,
-        )
+        # Batch insert line_item_transactions
+        for i in range(0, len(line_item_transactions), batch_size):
+            print(f"Inserting LineItemTransaction batch {i}")
+            cursor.executemany(
+                f"""INSERT INTO {cls.TABLE_NAME} (
+                    is_archived, 
+                    claim_status, 
+                    trace_number, 
+                    posted_date, 
+                    adjustment, 
+                    ins_paid, 
+                    ins_idx, 
+                    adjustment_reason, 
+                    created_at, 
+                    appointment_id, 
+                    doctor_id, 
+                    patient_id, 
+                    line_item_id
+                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                line_item_transactions[i : i + batch_size],
+            )

@@ -3,8 +3,10 @@
 # and underscores. A good package name should reflect your organization's
 # name or the intended use of these models
 name: 'everhealth_product_reporting'
-version: '1.0.0'
+version: '1.0.1'
 config-version: 2
+require-dbt-version: [">=1.5.0", "<1.6.0"]
+
 
 # This setting configures which "profile" dbt uses for this project.
 profile: 'everhealth_product_reporting'
@@ -32,12 +34,12 @@ clean-targets:         # directories to be removed by `dbt clean`
 # files using the `{{ config(...) }}` macro.
 models:
   everhealth_product_reporting:
-    daysheet:
-      +tags:
-        - "DaySheet"
-      cash:
-        +materialized: materialized_view
+    # daysheet:
+    #   +tags:
+    #     - "DaySheet"
+    #   cash:
+    #     +materialized: materialized_view
         
-      credits:
-        +materialized: materialized_view
+    #   credits:
+    #     +materialized: materialized_view
 
